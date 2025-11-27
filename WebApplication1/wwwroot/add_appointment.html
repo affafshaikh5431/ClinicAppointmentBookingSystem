@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Appointment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container py-4">
+
+        <!-- Header / Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary rounded mb-4 p-3">
+            <a class="navbar-brand fw-bold" href="#">Clinic Appointment System</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="doctor.html">Doctors</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="Patient.html">Patients</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="Appointment.html">Appointments</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <h2 class="mb-4 text-center">Book Appointment</h2>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <form id="appointmentForm">
+
+                    <!-- Patient Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Patient *</label>
+                        <select id="patientId" class="form-select" required>
+                            <option value="">Select Patient</option>
+                        </select>
+                    </div>
+
+                    <!-- Doctor Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Doctor *</label>
+                        <select id="doctorId" class="form-select" required>
+                            <option value="">Select Doctor</option>
+                        </select>
+                    </div>
+
+                    <!-- Date & Time -->
+                    <div class="mb-3">
+                        <label class="form-label">Appointment Date & Time *</label>
+                        <input type="datetime-local" id="appointmentDateTime" class="form-control" required>
+                    </div>
+
+                    <!-- Duration -->
+                    <div class="mb-3">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" id="duration" class="form-control" value="30" min="1">
+                    </div>
+
+                    <!-- Response -->
+                    <div id="result"></div>
+
+                    <button type="submit" class="btn btn-primary mt-3 w-100">Book Appointment</button>
+                </form>
+
+                <a href="Appointment.html" class="btn btn-secondary mt-3 w-100">Back</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+const apiBase = "https://localhost:44366/api";
+
+// Load Patients & Doctors on page load
+async function loadDropdowns() {
+    try {
+        // Load patients
+        const resPatients = await fetch(`${apiBase}/patients`);
+        const patients = await resPatients.json();
+        const patientSelect = document.getElementById("patientId");
+        patients.forEach(p => {
+            patientSelect.innerHTML += `<option value="${p.patientId}">${p.name}</option>`;
+        });
+
+        // Load doctors
+        const resDoctors = await fetch(`${apiBase}/doctor`);
+        const doctors = await resDoctors.json();
+        const doctorSelect = document.getElementById("doctorId");
+        doctors.forEach(d => {
+            doctorSelect.innerHTML += `<option value="${d.doctorId}">${d.name}</option>`;
+        });
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("result").innerHTML = `<div class="alert alert-danger">Error loading dropdowns</div>`;
+    }
+}
+
+        // Handle form submission
+        document.getElementById("appointmentForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const result = document.getElementById("result");
+
+            const patientId = document.getElementById("patientId").value;
+            const doctorId = document.getElementById("doctorId").value;
+            const dateTime = document.getElementById("appointmentDateTime").value;
+            const duration = parseInt(document.getElementById("duration").value) || 30;
+
+            if (!patientId || !doctorId || !dateTime) {
+                result.innerHTML = `<div class="alert alert-danger">Please fill all required fields.</div>`;
+                return;
+            }
+
+            // Validate time between 10:00 and 17:00
+            const appointmentDate = new Date(dateTime);
+            const hour = appointmentDate.getHours();
+            const minute = appointmentDate.getMinutes();
+
+            // Last slot should not exceed 17:00
+            if (hour < 10 || hour > 16 || (hour === 16 && minute > 0)) {
+                result.innerHTML = `<div class="alert alert-danger">Please select a time between 10:00 AM and 5:00 PM.</div>`;
+                return;
+            }
+
+            const appointment = {
+                patientId: parseInt(patientId),
+                doctorId: parseInt(doctorId),
+                appointmentDateTime: dateTime,
+                durationInMinutes: duration
+            };
+
+            result.innerHTML = "Booking...";
+
+            try {
+                const res = await fetch(`${apiBase}/appointments/add`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(appointment)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    result.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                    document.getElementById("appointmentForm").reset();
+                } else {
+                    result.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                result.innerHTML = `<div class="alert alert-danger">Server connection failed</div>`;
+            }
+        });
+
+
+// Load dropdowns when page loads
+window.addEventListener("DOMContentLoaded", loadDropdowns);
+    </script>
+
+</body>
+</html>

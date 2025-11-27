@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor List - Clinic Appointment System</title>
+
+    <!-- BOOTSTRAP 5 ONLINE CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container py-4">
+
+        <!-- Header / Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary rounded mb-4 p-3">
+            <a class="navbar-brand fw-bold" href="#">Clinic Appointment System</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="doctor.html">Doctors</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="Patient.html">Patients</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="Appointment.html">Appointments</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Doctor Table -->
+        <div class="card shadow-sm p-4">
+            <h4 class="mb-3">All Doctors Details</h4>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Specialization</th>
+                            <th>Qualification</th>
+                            <th>Gender</th>
+                            <th>View Available Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doctorTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const apiBase = 'https://localhost:44366/api/doctor';
+
+        // Auto Load Doctors on Page Load
+        window.onload = async () => {
+            const tableBody = document.getElementById('doctorTableBody');
+
+            try {
+                const res = await fetch(apiBase);
+                const doctors = await res.json();
+
+                tableBody.innerHTML = "";
+
+                doctors.forEach(d => {
+                    tableBody.innerHTML += `
+                            <tr>
+                                <td>${d.doctorId}</td>
+                                <td>${d.name}</td>
+                                <td>${d.specialization}</td>
+                                <td>${d.qualification}</td>
+                                <td>${d.gender}</td>
+                                <td>
+                                     <a href="available_slots.html?doctorId=${d.doctorId}&doctorName=${encodeURIComponent(d.name)}"
+                                       class="btn btn-sm btn-primary">
+                                        View Available Slots
+                                    </a>
+                               </td>
+                            </tr>
+                        `;
+                });
+
+            } catch (err) {
+                tableBody.innerHTML =
+                    `<tr><td colspan="5" class="text-danger text-center">Error loading doctor data</td></tr>`;
+            }
+        };
+    </script>
+
+</body>
+</html>

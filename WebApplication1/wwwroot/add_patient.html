@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Patient</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container py-4">
+
+        <!-- Header / Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary rounded mb-4 p-3">
+            <a class="navbar-brand fw-bold" href="#">Clinic Appointment System</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="doctor.html">Doctors</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="Patient.html">Patients</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="Appointment.html">Appointments</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+
+        <h2 class="mb-3 text-center">Add New Patient</h2>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <form id="patientForm">
+
+                    <!-- Name -->
+                    <div class="mb-3">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" id="name" class="form-control" required>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="text" id="phone" class="form-control">
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="mb-3">
+                        <label class="form-label">Gender *</label>
+                        <select id="gender" class="form-select" required>
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Response -->
+                    <div id="result"></div>
+
+                    <button type="submit" class="btn btn-primary mt-3 w-100">
+                        Save Patient
+                    </button>
+
+                </form>
+
+                <a href="Patient.html" class="btn btn-secondary mt-3 w-100">Back</a>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+       
+
+        document.getElementById("patientForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const result = document.getElementById("result");
+
+            const name = document.getElementById("name").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const gender = document.getElementById("gender").value.trim();
+
+            // ===== VALIDATION START =====
+
+            // Name Validation → alphabets only + spaces
+            const nameRegex = /^[A-Za-z ]{2,200}$/;
+            if (!nameRegex.test(name)) {
+                result.innerHTML = `
+                        <div class="alert alert-danger">
+                            Name should contain only letters & spaces (min 2 characters).
+                        </div>`;
+                return;
+            }
+
+            // Phone Validation (only if entered)
+            if (phone.length > 0) {
+                const phoneRegex = /^[0-9]{10}$/; // exactly 10 digits
+                if (!phoneRegex.test(phone)) {
+                    result.innerHTML = `
+            <div class="alert alert-danger">
+                Please enter a valid 10-digit phone number.
+            </div>`;
+                    return;
+                }
+            }
+
+            // Gender Validation
+            if (gender === "") {
+                result.innerHTML = `
+                        <div class="alert alert-danger">
+                            Please select gender.
+                        </div>`;
+                return;
+            }
+
+            // ===== VALIDATION END =====
+
+            const patient = { name, phone, gender };
+
+            result.innerHTML = "Saving...";
+            console.log("s");
+            const apiBase = "https://localhost:44366/api/patients/add";
+            try {
+                const res = await fetch(apiBase, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(patient)
+                });
+
+                const data = await res.text();
+                console.log(data);
+                if (data === "SUCCESS") {
+                    result.innerHTML = `
+                            <div class="alert alert-success">
+                                Patient added successfully!
+                            </div>`;
+                    document.getElementById("patientForm").reset();
+                } else {
+                    result.innerHTML = `
+                            <div class="alert alert-danger">
+                                Error: ${data}
+                            </div>`;
+                    console.log(data);
+                }
+            }
+            catch (err) {
+                result.innerHTML = `
+                        <div class="alert alert-danger">
+                            Server connection failed
+                        </div>`;
+            }
+        });
+    </script>
+
+</body>
+</html>

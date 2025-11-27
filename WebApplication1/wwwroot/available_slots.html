@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Available Slots - Clinic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container py-4">
+
+        <!-- Header / Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary rounded mb-4 p-3">
+            <a class="navbar-brand fw-bold" href="#">Clinic Appointment System</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="doctor.html">Doctors</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="Patient.html">Patients</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="Appointment.html">Appointments</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <h3 class="mb-4" id="doctorName">Doctor Available Slots</h3>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label>Select Date</label>
+                <input type="date" id="dateInput" class="form-control">
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-primary w-100" onclick="getSlots()">Check Slots</button>
+            </div>
+        </div>
+
+        <div class="card p-3 shadow-sm">
+            <h5>Available Slots</h5>
+            <ul id="slotsList" class="list-group mt-3"></ul>
+        </div>
+    </div>
+
+    <script>
+    const apiBase = 'https://localhost:44366/api/doctor';
+
+   
+    const urlParams = new URLSearchParams(window.location.search);
+        const doctorId = urlParams.get('doctorId');
+        const doctorName = urlParams.get('doctorName');
+
+    if (!doctorId) {
+        alert("Doctor ID is missing!");
+        window.location.href = 'doctor-list.html'; 
+    }
+
+        document.getElementById('doctorName').innerText = `Available Slots for ${decodeURIComponent(doctorName)}`;
+
+
+    async function getSlots() {
+        const date = document.getElementById('dateInput').value;
+        const list = document.getElementById('slotsList');
+
+        if (!date) {
+            alert("Please select a date!");
+            return;
+        }
+
+        list.innerHTML = "<li class='list-group-item text-center'>Loading...</li>";
+
+        try {
+            const res = await fetch(`${apiBase}/${doctorId}/availabletimes?date=${date}`);
+            if (!res.ok) throw new Error("API error");
+
+            const times = await res.json();
+            list.innerHTML = "";
+
+            if (times.length === 0) {
+                list.innerHTML = "<li class='list-group-item text-danger'>No slots available</li>";
+                return;
+            }
+
+            times.forEach(time => {
+                const dateObj = new Date(time);
+                const formatted = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                list.innerHTML += `
+                <li class='list-group-item list-group-item-success d-flex justify-content-between align-items-center'>
+                    ${formatted} <span class="badge bg-light text-success">Available</span>
+                </li>`;
+            });
+
+
+        } catch (err) {
+            list.innerHTML = "<li class='list-group-item text-danger'>Error loading slots</li>";
+            console.error(err);
+        }
+    }
+    </script>
+
+</body>
+</html>
